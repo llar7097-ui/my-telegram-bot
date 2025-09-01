@@ -1,0 +1,55 @@
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+
+# === НАСТРОЙКИ ===
+TOKEN = "8482024659:AAEKPoPYm96dI6DkQTxU6pFanzZKZ7Y9Gvg"   # твой токен из BotFather
+ADMIN_ID = 1822874836                                       # твой Telegram ID
+
+# === /start: приветствие и инструкция ===
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = (
+        "🌙 Привет! Меня зовут Лариса, я практик Таро и эзотерики.\n"
+        "Помогаю находить ответы там, где логика молчит ✨\n\n"
+        "🔮 *Индивидуальный расклад по твоему вопросу*\n\n"
+        "📌 *Формат:*\n"
+        "Ты пишешь свой вопрос → я делаю расклад на картах Таро → и в течение пары часов получаешь ответ 💌\n\n"
+        "💰 *Стоимость:* 500 грн\n\n"
+        "👇 Оплати по номеру карты, а потом отправь сюда 📷 скрин + 📝 свой вопрос:\n\n"
+        "🇺🇦 4441 1111 4397 8900 (грн)\n"
+        "🇪🇺 5313 7700 4628 8378 (евро)\n\n"
+        "Я получу твоё сообщение и отвечу прямо в этот чат 🙌"
+    )
+    await update.message.reply_text(text, parse_mode="Markdown")
+
+# === Приём сообщений клиента и пересылка админу ===
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    chat_id = update.effective_chat.id
+    message = update.message
+
+    # пересылаем админу
+    await context.bot.send_message(
+        ADMIN_ID,
+        f"📩 Новое сообщение от {user.full_name}"
+        f"{' (@'+user.username+')' if user.username else ''}\nID: {chat_id}"
+    )
+    await context.bot.copy_message(ADMIN_ID, chat_id, message.message_id)
+
+    # авто-ответ клиенту
+    await update.message.reply_text(
+        "✨ Спасибо за доверие!\n\n"
+        "Я получила твой вопрос и скрин оплаты 🙌\n"
+        "Скоро сделаю расклад и в течение пары часов отправлю тебе подробный ответ 💌\n\n"
+        "🌙 А пока можешь загадать намерение — это усилит твоё послание картам 🔮"
+    )
+
+# === Основной запуск ===
+def main():
+    app = Application.builder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT | filters.PHOTO | filters.Document.ALL, handle_message))
+    print("🤖 Бот запущен...")
+    app.run_polling(drop_pending_updates=True)
+
+if __ name__ == "__main__":
+    main() 
